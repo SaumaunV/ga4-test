@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GA4 Parameter Test</title>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-S5FQWEVJ1E"></script> 
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    </script>
+
+    <script>
+    (function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramsToCapture = ['uid', 'utm_source', 'utm_medium', 'utm_campaign'];
+        let capturedData = {};
+
+        paramsToCapture.forEach(param => {
+            const value = urlParams.get(param);
+            if (value) {
+                localStorage.setItem('al_' + param, value);
+                capturedData[param] = value;
+            }
+        });
+
+        const finalId = capturedData['uid'] || localStorage.getItem('al_uid');
+
+        if (finalId && typeof gtag === 'function') {
+            gtag('set', 'user_properties', { 'contact_id': finalId });
+            gtag('set', { 'user_id': finalId });
+            
+            gtag('config', 'G-S5FQWEVJ1E', { 
+                'debug_mode': true,
+                'user_id': finalId
+            });
+        }
+
+        window.dataLayer.push({
+            'event': 'campaign_data_captured',
+            'attribution_data': capturedData
+        });
+    })();
+    </script>
+</head>
+<body>
+    <h1>GA4 Parameter Test Page</h1>
+</body>
+</html>
