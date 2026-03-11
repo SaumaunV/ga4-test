@@ -14,48 +14,44 @@
     <script>
     (function() {
     const urlParams = new URLSearchParams(window.location.search);
-    
-    // List of parameters
     const paramsToCapture = ['uid', 'utm_source', 'utm_medium', 'utm_campaign'];
     let capturedData = {};
 
+    // 1. Always check URL and update LocalStorage if new data exists
     paramsToCapture.forEach(param => {
         const value = urlParams.get(param);
         if (value) {
-            // Save to individual keys in LocalStorage
             localStorage.setItem('al_' + param, value);
             capturedData[param] = value;
         }
     });
 
-    if (Object.keys(capturedData).length > 0) {
+    // 2. Check URL OR LocalStorage for an ID
+    const finalId = capturedData['uid'] || localStorage.getItem('al_uid');
+
+    if (finalId) {
         if (typeof gtag === 'function') {
-            const finalId = capturedData['uid'] || localStorage.getItem('al_uid');
+            // Set properties
+            gtag('set', 'user_properties', { 'contact_id': finalId });
+            gtag('set', { 'user_id': finalId });
 
-            if (finalId) {
-                // 1. Set the User ID (System Level)
-                gtag('set', 'user_properties', {
+            // 3. Fire the Config (This is the "Start" button)
+            gtag('config', 'G-S5FQWEVJ1E', {
+                'debug_mode': true,
+                'user_id': finalId
+            });
+
+            // 4. Push to DataLayer (Only if new data was actually in the URL)
+            if (Object.keys(capturedData).length > 0) {
+                window.dataLayer.push({
+                    'event': 'campaign_data_captured',
+                    'attribution_data': capturedData,
                     'contact_id': finalId
-                });
-
-                // 2. Set the User ID for Cross-Device Tracking
-                gtag('set', { 'user_id': finalId });
-
-                // 3. Fire the Config with all parameters
-                gtag('config', 'G-S5FQWEVJ1E', {
-                    'debug_mode': true,
-                    'user_id': finalId
                 });
             }
         }
-
-        // 4. Push to DataLayer for GTM
-        window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({
-            'event': 'campaign_data_captured',
-            'attribution_data': capturedData,
-            'contact_id': capturedData['uid']
-        });
+    } else {
+        console.log("Anonymous user detected. Tracking stayed dormant.");
     }
 })();
     </script>
